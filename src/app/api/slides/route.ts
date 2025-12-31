@@ -227,8 +227,20 @@ export async function POST(request: NextRequest) {
 
     // Initialize clients
     const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+    
+    // Handle Google credentials - support both file path (local) and JSON string (Vercel)
+    let authConfig: { keyFile?: string; credentials?: Record<string, unknown> };
+    try {
+      // Try parsing as JSON first (for Vercel)
+      const credentialsJson = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS!);
+      authConfig = { credentials: credentialsJson };
+    } catch {
+      // If parsing fails, treat as file path (for local development)
+      authConfig = { keyFile: process.env.GOOGLE_APPLICATION_CREDENTIALS! };
+    }
+    
     const auth = new google.auth.GoogleAuth({
-      keyFile: process.env.GOOGLE_APPLICATION_CREDENTIALS,
+      ...authConfig,
       scopes: [
         "https://www.googleapis.com/auth/presentations",
         "https://www.googleapis.com/auth/drive",
